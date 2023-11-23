@@ -33,7 +33,6 @@ module.exports = {
         for(const profile of profiles){
             const id = (profile.split("-"))[1]
             const guildmember = await guildMembers.fetch(id)
-            console.log(guildmember.id)
             if(guildmember){
                 memberList.push({
                     id:id,
