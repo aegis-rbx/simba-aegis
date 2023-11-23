@@ -238,10 +238,19 @@ async function readCommandLine(){
 
 
 client.on(Events.InteractionCreate, async (interaction) => {
-    const command = client.commands.get(interaction.commandName);
+    let commandName
+    if (!interaction.isChatInputCommand()){
+        const arr = interaction.customId.split('-')
+        commandName = arr[0]
+    }
+    else{
+        commandName = interaction.commandName
+    }
+
+    const command = client.commands.get(commandName);
 
     if (!command) {
-        console.error(`[CORE | ERROR] No command matching ${interaction.commandName} was found.`);
+        console.error(`[CORE | ERROR] No command matching ${commandName} was found.`);
         return;
     }
 
