@@ -6,10 +6,12 @@ const wctext = `
   ____) |_| |_| |  | | |_) / ____ \\     | |___| |__| | | \\ \\| |____ 
  |_____/|_____|_|  |_|____/_/    \\_\\     \\_____\\____/|_|  \\_|______|
                                                                     
- A simple discord bot app by notarib-catcher
+ A simple discord bot app by notarib-catcher (ribcatcher)
                                                                     `
 const copydisc = `
 ---------------NOTICE---------------
+Copyright (c) 2023 "ribcatcher" (catcherofribs@gmail.com)
+
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
