@@ -224,7 +224,7 @@ async function readCommandLine(){
         }
         else {
             try {
-                await command.execute(text, client).catch(error => () => {
+                await command.execute(text, client).catch(error => {
                     console.error(error)
                 })
             } catch (e) {
