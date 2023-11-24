@@ -2,4 +2,5 @@ config.json
 deployment.json
 node_modules
 package-lock.json
-user_data
+user_data/dutystates.json
+user_data/dutystates_export.json
