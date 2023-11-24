@@ -224,7 +224,7 @@ async function readCommandLine(){
         }
         else {
             try {
-                await command.execute(text, client).catch(error => () => {
+                await command.execute(text, client).catch(error => {
                     console.error(error)
                 })
             } catch (e) {
@@ -267,7 +267,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 })
 
 client.on(Events.ClientReady, () => {
-    console.log("Logged in and ready!")
+    console.log("[CORE] Logged in and ready!")
 })
 client.login(token)
 setTimeout(start, 1000)
