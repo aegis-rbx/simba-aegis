@@ -67,7 +67,7 @@ module.exports = {
             await interaction.followUp(`### <@&${report[0]}>:\n${report[1]}`)
         }
 
-        db.JSON({})
+        db.deleteAll()
     },
     init: async (client)=> {
         client.dutystate_db = db_main
