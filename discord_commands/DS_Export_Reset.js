@@ -19,6 +19,10 @@ module.exports = {
             interaction.editReply("Not confirmed, disregarding.")
             return
         }
+        console.log("[DS_DISCORD_ADMIN]")
+        await import('boxen').then(b => {
+            console.warn(b.default(`Quota reset initiated by ${interaction.member.id} at ${new Date().getTime()}`,{padding:1}))
+        })
         const currentDBState = db.JSON()
         dbExport.set(new Date().getTime()+"-export", currentDBState)
         const entries = Object.keys(currentDBState)
@@ -65,6 +69,10 @@ module.exports = {
         await interaction.editReply("Report generated!")
         for(const report of reports){
             await interaction.followUp(`### <@&${report[0]}>:\n${report[1]}`)
+        }
+
+        if(reports.length == 0){
+            interaction.followUp("Reporting filtered zero members: Nothing to report")
         }
 
         db.deleteAll()
