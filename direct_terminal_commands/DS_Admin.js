@@ -48,7 +48,7 @@ module.exports = {
             db.delete("profile-"+target)
             let str = `Accepted: ${profile.accepted}\nRejected: ${profile.rejected}\nPending: ${profile.pending}\nGraded: ${profile.graded}`
             await import('boxen').then(b => {
-                console.log(b.default(str))
+                console.log(b.default(str,{padding:1}))
             })
 
             return
@@ -71,7 +71,7 @@ module.exports = {
             else{
                 let str = `Accepted: ${profile.accepted}\nRejected: ${profile.rejected}\nPending: ${profile.pending}\nGraded: ${profile.graded}`
                 await import('boxen').then(b => {
-                    console.log(b.default(str))
+                    console.log(b.default(str,{padding:1}))
                 })
                 return
             }
@@ -97,6 +97,13 @@ module.exports = {
 
         let profile = db.get("profile-"+target)
         if(!profile){
+            const user = await client.users.fetch(target).catch(error => {
+                console.error('Unable to fetch user')
+            })
+            if(!user){
+                console.error('No user found with that id')
+                return
+            }
             console.log("User has no profile")
             console.log("Creating one now...")
             profile = {
@@ -120,7 +127,7 @@ module.exports = {
         console.log(strdelta)
         let str = `Accepted: ${profile.accepted}\nRejected: ${profile.rejected}\nPending: ${profile.pending}\nGraded: ${profile.graded}`
         await import('boxen').then(b => {
-            console.log(b.default(str))
+            console.log(b.default(str, {padding:1}))
         })
 
 
