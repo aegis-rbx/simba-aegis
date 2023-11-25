@@ -6,7 +6,7 @@ This project uses [the discord.js guide](discord.js.guide) as a guide for its st
 Its features include:
 - A modular structure for all your code.
 - Natively supports discord slash commands.
-- Supports CRON jobs for repetitive tasks.
+- Supports CRON jobs as modules for repetitive tasks.
 - Supports terminal commands in a CLI. Terminal commands are added as modules too.
 
 ### Config/Setup:
