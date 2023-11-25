@@ -20,7 +20,7 @@ Its features include:
 ***
 
 ### Discord commands:
-- Each command is defined in a js file in the `discord_commands` server.
+- Each command is defined in a js file in the `discord_commands` folder.
 - The name of the file doesn't matter, as long as it ends in `.js`
 - The file structure must match the `command.js.example` you can find in the folder
 - Each file must have a `module.exports` that exports 3 properties: `data`, `execute` and `init`.
