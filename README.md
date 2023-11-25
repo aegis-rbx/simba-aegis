@@ -26,7 +26,7 @@ Its features include:
 - Each file must have a `module.exports` that exports 3 properties: `data`, `execute` and `init`.
 - `data` must be an object of SlashCommandBuilder() that will be used to register the command with discord.
 - `init` and `execute` are async functions.
-- `init` is called when the bot is starting and it is provided with an instance the discord client as its parameter.
+- `init` is called when the bot is starting and it is provided with an instance of the discord client as its parameter.
 - `execute` is called when an interaction for this command is received. The interaction object is passed into it.
 - For non-slash commands (buttoninteractions, etc) the customId of the interaction is used to figure out which command needs to be run.
 - The structure of the customId must be `commandname-blablabla` where commandname is the same as the name set in your module.exports.data for non-slash interactions.
