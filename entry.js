@@ -20,6 +20,10 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 ------------------------------------
 `
 
+var unstable = false
+var prefix_console = ">"
+var prefix_all = "[UNSET]"
+
 console.log(wctext)
 console.warn(copydisc)
 console.log("")
@@ -32,8 +36,10 @@ const readline = require('readline').createInterface({
     output: process.stdout
 });
 
+process.readLineHandler = readline
 
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
+
+const { Client, Collection, Events, GatewayIntentBits, SnowflakeUtil } = require('discord.js');
 const { token } = require('./config.json');
 const cron = require('node-cron');
 
@@ -44,10 +50,16 @@ const client = new Client({
         GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildPresences
-    ]
+        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.GuildVoiceStates
+    ],
+    allowedMentions: {
+        parse: ['roles','everyone','users'],
+        repliedUser: true
+    }
 })
 
+client.process_unstable = false
 client.commands = new Collection()
 client.jobs = new Collection()
 client.terminal_commands = new Collection()
@@ -64,23 +76,50 @@ console.originalDebug = console.debug
 function termWrapper(out, type='log') {
     process.stdout.clearLine()
     process.stdout.cursorTo(0)
-    if(type === 'warn'){
-        console.originalWarn(out)
-    }
-    else if(type === 'error'){
-        console.originalError(out)
-    }
-    else if(type === 'info'){
-        console.originalInfo(out)
-    }
-    else if(type === 'debug'){
-        console.originalDebug(out)
+    if(typeof out === "string"){
+        out = out.split("\n")
+        for(let line of out){
+            process.stdout.write(prefix_all)
+            if(type === 'warn'){
+                process.stdout.write("[WARN] ")
+                console.originalWarn(line)
+            }
+            else if(type === 'error'){
+                process.stdout.write("[ERROR] ")
+                console.originalError(line)
+            }
+            else if(type === 'info'){
+                console.originalInfo(line)
+            }
+            else if(type === 'debug'){
+                console.originalDebug(line)
+            }
+            else{
+                console.originalLog(line)
+            }
+        }
     }
     else{
-        console.originalLog(out)
+        process.stdout.write(prefix_all)
+        if(type === 'warn'){
+            console.originalWarn(out)
+        }
+        else if(type === 'error'){
+            console.originalError(out)
+        }
+        else if(type === 'info'){
+            console.originalInfo(out)
+        }
+        else if(type === 'debug'){
+            console.originalDebug(out)
+        }
+        else{
+            console.originalLog(out)
+        }
     }
+    
 
-    process.stdout.write('> ')
+    process.stdout.write(prefix_console + ' ')
 }
 
 
@@ -175,7 +214,14 @@ async function start(){
     client.jobs.forEach( job => {
         if(cron.validate(job.data.cron)){
             cron.schedule(job.data.cron, async () => {
-                job.execute(client)
+                try{
+                    job.execute(client).catch(err => {
+                        console.error(err)
+                    })
+                }
+                catch(err){
+                    console.error(err)
+                }
             })
             console.log("[CORE | CRON] Scheduled "+job.data.name)
         }
@@ -209,7 +255,10 @@ async function initCommandLine(){
         termWrapper(out, 'debug')
     }
     readCommandLine()
+    prefix_all = "[CORESTATE | STARTED] "
     console.log("[CORE] Startup Complete")
+    prefix_all = "[CORESTATE | OK] "
+
 }
 
 async function readCommandLine(){
@@ -218,6 +267,44 @@ async function readCommandLine(){
         if(text.trim()){
             readCommandLine()
         }
+
+        if(arr[0] == "help"){
+            if(arr.length > 2){
+                console.error("Usage: help [command name]")
+                return
+            }
+
+            if(arr.length === 1){
+                console.log("Available commands:\n-----")
+                client.terminal_commands.map((val) => {
+                    console.log(val.data.name)
+                })
+                console.log("-----\nhelp [command] for command-specific help")
+                return
+            }
+
+            if(arr.length === 2){
+                let command = client.terminal_commands.get(arr[1])
+
+                if(!command){
+                    console.error('No such command')
+                    return
+                }
+
+                if(!command.data.help){
+                    console.error('Command has no documentation')
+                    return
+                }
+                console.log(arr[1] + "\n-----")
+
+                console.log(command.data.help)
+                console.log("-----\nUse help [command] for command-specific help or just 'help' for a list of commands")
+
+            }
+
+            return
+        }
+
         let command = client.terminal_commands.get(arr[0])
         if(!command){
             console.error('No such command')
@@ -255,14 +342,55 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     try {
-        await command.execute(interaction);
+        await command.execute(interaction).catch(
+            async (error) => {
+                console.error(`[CORE | ${commandName} | ERROR] Runtime error encountered`)
+                console.error(error);
+                try{
+                    if (interaction.replied || interaction.deferred) {
+                        await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true })
+                            .catch((error) => {
+                                console.error("[CORE | ASYNC | EXCEPTION] Error handler reply - error.")
+                                console.error(error)
+                            });
+                    } else {
+                        await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true })
+                            .catch((error) => {
+                                console.error("[CORE | ASYNC | EXCEPTION] Error handler reply - error.")
+                                console.error(error)
+                            })
+                    }
+                }
+                catch(error){
+                    console.error("[CORE | SYNC | EXCEPTION] Error handler reply - error.")
+                    console.error(error)
+                }
+                
+            }
+        );
     } catch (error) {
+        console.error(`[CORE | ${commandName} | ERROR] Runtime error encountered`)
         console.error(error);
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
-        } else {
-            await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+        try{
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true })
+                    .catch((error) => {
+                        console.error("[CORE | ASYNC | EXCEPTION] Error handler reply - error.")
+                        console.error(error)
+                    });
+            } else {
+                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true })
+                    .catch((error) => {
+                        console.error("[CORE | ASYNC | EXCEPTION] Error handler reply - error.")
+                        console.error(error)
+                    })
+            }
         }
+        catch(error){
+            console.error("[CORE | SYNC | EXCEPTION] Error handler reply - error.")
+            console.error(error)
+        }
+        
     }
 })
 
@@ -270,4 +398,39 @@ client.on(Events.ClientReady, () => {
     console.log("[CORE] Logged in and ready!")
 })
 client.login(token)
+
+process.on("uncaughtException", (exep) => {
+    
+    prefix_console = "[UNSTABLE] >"
+    if(!prefix_all.includes("E-UE")){
+        prefix_all = (prefix_all.includes("UNSTABLE"))? prefix_all.replace("]" , " | E-UE]"):"[CORESTATE | UNSTABLE | E-UE] "
+    }
+    console.error(exep)
+    console.error("!!!UNCAUGHT EXCEPTION BUBBLED TO TOP OF EVENT LOOP!!!")
+    try{
+        client.process_unstable = true
+    }
+    catch(e){
+        console.error("UNABLE TO MARK CLIENT AS UNSTABLE")
+    }
+    return
+})
+
+process.on("unhandledRejection", (exep) => {
+    prefix_console = "[UNSTABLE] >"
+    if(!prefix_all.includes("E-UR")){
+        prefix_all = (prefix_all.includes("UNSTABLE"))? prefix_all.replace("]" , " | E-UR]"):"[CORESTATE | UNSTABLE | E-UR] "
+    }
+    console.error(exep)
+    console.error("!!!UNHANDLED REJECTION BUBBLED TO TOP OF EVENT LOOP!!!")
+    try{
+        client.process_unstable = true
+    }
+    catch(e){
+        console.error("UNABLE TO MARK CLIENT AS UNSTABLE")
+    }
+    return
+})
+
+
 setTimeout(start, 1000)
